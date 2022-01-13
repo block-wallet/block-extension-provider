@@ -53,9 +53,9 @@ export default class BlankProvider
     private _handlers: Handlers;
     private _requestId: number;
     private _metamask: {
-        isEnabled(): boolean;
-        isApproved(): Promise<boolean>;
-        isUnlocked(): Promise<boolean>;
+        isEnabled: () => boolean;
+        isApproved: () => Promise<boolean>;
+        isUnlocked: () => Promise<boolean>;
     };
 
     constructor() {
@@ -495,6 +495,9 @@ export default class BlankProvider
                 break;
             case ProviderEvents.accountsChanged:
                 this._accountsChanged(payload);
+                break;
+            case ProviderEvents.message:
+                this._sendMessageToConsumer(payload);
                 break;
             default:
                 break;

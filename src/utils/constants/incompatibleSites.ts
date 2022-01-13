@@ -4,9 +4,10 @@
  * Be sure to add the location.hostname
  */
 export const incompatibleSites = [
-    'opensea.io',
-    'gnosis-safe.io',
-    'bridge.degate.com',
-    'app.mcdex.io',
     'app.hop.exchange',
+    'app.mcdex.io',
+    'bridge.degate.com',
+    'gnosis-safe.io',
+    'matcha.xyz',
+    'opensea.io',
 ];
