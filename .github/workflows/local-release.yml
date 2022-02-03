@@ -1,7 +1,6 @@
 name: Release
 
 on:
-
   pull_request:
     branches:
       - master
@@ -10,40 +9,39 @@ on:
   workflow_dispatch:
     inputs:
       cache:
-        description: 'Delete cache'     
+        description: "Delete cache"
         required: false
-        default: 'true'
+        default: "true"
 
   repository_dispatch:
-    types: [ automation ]
+    types: [automation]
 
 jobs:
   build-release:
-
     if: github.event.pull_request.merged == true || github.event_name == 'repository_dispatch' || github.event_name == 'workflow_dispatch'
     runs-on: self-hosted
 
     steps:
-      - run: echo "::set-output name=branch::$(git ls-remote https://${{ secrets.USER_PAT }}:${{ secrets.PAT }}@github.com/Blank-Wallet/extension.git ${{ github.head_ref }})"
+      - run: echo "::set-output name=branch::$(git ls-remote https://${{ secrets.USER_PAT }}:${{ secrets.PAT }}@github.com/block-wallet/extension.git ${{ github.head_ref }})"
         id: monorepo-branch
 
-      - run: echo "::set-output name=branch::$(git ls-remote https://${{ secrets.USER_PAT }}:${{ secrets.PAT }}@github.com/Blank-Wallet/extension-provider.git ${{ github.head_ref }})"
+      - run: echo "::set-output name=branch::$(git ls-remote https://${{ secrets.USER_PAT }}:${{ secrets.PAT }}@github.com/block-wallet/extension-provider.git ${{ github.head_ref }})"
         id: provider-branch
 
-      - run: echo "::set-output name=branch::$(git ls-remote https://${{ secrets.USER_PAT }}:${{ secrets.PAT }}@github.com/Blank-Wallet/extension-ui.git ${{ github.head_ref }})"
+      - run: echo "::set-output name=branch::$(git ls-remote https://${{ secrets.USER_PAT }}:${{ secrets.PAT }}@github.com/block-wallet/extension-ui.git ${{ github.head_ref }})"
         id: ui-branch
 
       - run: echo "::set-output name=name::provider_${{ github.event.number }}_$(date +"%FT%T").zip"
         id: zip
 
-      - run: echo "::set-output name=title::$(gh pr view https://${{ secrets.USER_PAT }}:${{ secrets.PAT }}@github.com/Blank-Wallet/extension-provider/pull/${{ github.event.number }} --json title --jq '.title')"
+      - run: echo "::set-output name=title::$(gh pr view https://${{ secrets.USER_PAT }}:${{ secrets.PAT }}@github.com/block-wallet/extension-provider/pull/${{ github.event.number }} --json title --jq '.title')"
         id: pr
 
       - name: Checkout monorepo
         uses: actions/checkout@v2
         if: ${{ (steps.monorepo-branch.outputs.branch == '') }}
         with:
-          repository: Blank-Wallet/extension
+          repository: block-wallet/extension
           ref: refs/heads/master
           token: ${{ secrets.PAT }}
 
@@ -51,7 +49,7 @@ jobs:
         uses: actions/checkout@v2
         if: ${{ (steps.ui-branch.outputs.branch == '') }}
         with:
-          repository: Blank-Wallet/extension-ui
+          repository: block-wallet/extension-ui
           ref: refs/heads/master
           path: packages/ui/
           token: ${{ secrets.PAT }}
@@ -60,7 +58,7 @@ jobs:
         uses: actions/checkout@v2
         if: ${{ (steps.background-branch.outputs.branch == '') }}
         with:
-          repository: Blank-Wallet/extension-background
+          repository: block-wallet/extension-background
           ref: refs/heads/master
           path: packages/background/
           token: ${{ secrets.PAT }}
@@ -69,7 +67,7 @@ jobs:
         uses: actions/checkout@v2
         if: ${{ (steps.monorepo-branch.outputs.branch != '') }}
         with:
-          repository: Blank-Wallet/extension
+          repository: block-wallet/extension
           ref: ${{ github.head_ref }}
           token: ${{ secrets.PAT }}
 
@@ -77,7 +75,7 @@ jobs:
         uses: actions/checkout@v2
         if: ${{ (steps.ui-branch.outputs.branch != '') }}
         with:
-          repository: Blank-Wallet/extension-ui
+          repository: block-wallet/extension-ui
           ref: ${{ github.head_ref }}
           path: packages/ui/
           token: ${{ secrets.PAT }}
@@ -86,7 +84,7 @@ jobs:
         uses: actions/checkout@v2
         if: ${{ (steps.background-branch.outputs.branch != '') }}
         with:
-          repository: Blank-Wallet/extension-background
+          repository: block-wallet/extension-background
           ref: ${{ github.head_ref }}
           path: packages/background/
           token: ${{ secrets.PAT }}
@@ -94,7 +92,7 @@ jobs:
       - name: Checkout make scripts
         uses: actions/checkout@v2
         with:
-          repository: Blank-Wallet/blank-make
+          repository: block-wallet/block-make
           ref: refs/heads/main
           path: .make
           token: ${{ secrets.PAT }}
@@ -109,7 +107,7 @@ jobs:
         id: cache-ui
         with:
           key: provider-ci-${{ runner.os }}-${{ hashFiles('packages/ui/package.json') }}
-          path: 'packages/ui/node_modules'
+          path: "packages/ui/node_modules"
 
       - name: Dependency provider cache
         if: ${{ github.event.inputs.cache != 'true' }}
@@ -117,25 +115,25 @@ jobs:
         id: cache-provider
         with:
           key: provider-ci-${{ runner.os }}-${{ hashFiles('packages/provider/package.json') }}
-          path: 'packages/provider/node_modules'
+          path: "packages/provider/node_modules"
 
       - name: Dependency background cache
         uses: actions/cache@v2
         id: cache-background
         with:
           key: provider-ci-${{ runner.os }}-${{ hashFiles('packages/background/package.json') }}
-          path: 'packages/background/node_modules'
+          path: "packages/background/node_modules"
 
       - name: Install UI dependencies
-        if: ${{ (steps.cache-ui.outputs.cache-hit != 'true') || (github.event.inputs.cache == 'true') }} 
+        if: ${{ (steps.cache-ui.outputs.cache-hit != 'true') || (github.event.inputs.cache == 'true') }}
         run: cd packages/ui/ && yarn install --cache-folder .ui-cache
 
       - name: Install background dependencies
-        if: ${{ (steps.cache-background.outputs.cache-hit != 'true') || (github.event.inputs.cache == 'true') }} 
+        if: ${{ (steps.cache-background.outputs.cache-hit != 'true') || (github.event.inputs.cache == 'true') }}
         run: cd packages/background/ && yarn install --cache-folder .background-cache
 
       - name: Install provider dependencies
-        if: ${{ (steps.cache-provider.outputs.cache-hit != 'true') || (github.event.inputs.cache == 'true') }} 
+        if: ${{ (steps.cache-provider.outputs.cache-hit != 'true') || (github.event.inputs.cache == 'true') }}
         run: cd packages/provider/ && yarn install --cache-folder .provider-cache
 
       - name: Build extension
@@ -156,7 +154,7 @@ jobs:
           aws-region: us-east-2
 
       - name: Upload zip to S3
-        run: aws s3 cp ${{ steps.zip.outputs.name }} s3://releases.goblank.io/provider/master/
+        run: aws s3 cp ${{ steps.zip.outputs.name }} s3://releases.blockwallet.io/provider/master/
 
       - run: mv ${{ steps.zip.outputs.name }} provider_release.zip
       - name: Upload
@@ -185,11 +183,11 @@ jobs:
               "attachments": [
                 {
                   "color": "#36a64f",
-                  "pretext": "<http://releases.goblank.io/provider/master/${{ steps.zip.outputs.name }}|Download> 'master' build release",
+                  "pretext": "<http://releases.blockwallet.io/provider/master/${{ steps.zip.outputs.name }}|Download> 'master' build release",
                   "author_name": "Provider",
-                  "author_link": "https://github.com/Blank-Wallet/extension-provider",
+                  "author_link": "https://github.com/block-wallet/extension-provider",
                   "title": "${{ steps.pr.outputs.title }} #${{ github.event.number }}",
-                  "title_link": "https://github.com/Blank-Wallet/extension-provider/pull/${{ github.event.number }}",
+                  "title_link": "https://github.com/block-wallet/extension-provider/pull/${{ github.event.number }}",
                   "fields": [
                     {
                         "title": "Branch",
@@ -198,7 +196,7 @@ jobs:
                     },
                     {
                         "title": "Commit",
-                        "value": "<https://github.com/Blank-Wallet/extension-provider/commit/${{github.event.pull_request.head.sha}}|${{github.event.pull_request.head.sha}}>",
+                        "value": "<https://github.com/block-wallet/extension-provider/commit/${{github.event.pull_request.head.sha}}|${{github.event.pull_request.head.sha}}>",
                         "short": true
                     }
                   ]

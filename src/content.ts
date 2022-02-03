@@ -51,6 +51,6 @@ if (checkScriptLoad()) {
             }
         });
     } catch (error) {
-        log.error('Blank Wallet: Provider injection failed.', error);
+        log.error('BlockWallet: Provider injection failed.', error);
     }
 }

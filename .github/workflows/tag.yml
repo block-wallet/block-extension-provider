@@ -31,7 +31,7 @@ jobs:
       - run: echo "::set-output name=name::${{ github.event.inputs.tag }}_provider_release.zip"
         id: zip
 
-      - run: echo "::set-output name=object::$(aws s3 ls s3://releases.goblank.io/provider/master --recursive | sort | tail -n 1 | awk '{print $4}')"
+      - run: echo "::set-output name=object::$(aws s3 ls s3://releases.blockwallet.io/provider/master --recursive | sort | tail -n 1 | awk '{print $4}')"
         id: s3-release
 
       - name: Checkout repository
@@ -67,9 +67,9 @@ jobs:
               "attachments": [
                 {
                   "color": "#00F6FA",
-                  "pretext": "<http://releases.goblank.io/${{ steps.s3-release.outputs.object }}|Download> ${{ github.event.inputs.tag }} build release",
+                  "pretext": "<http://releases.blockwallet.io/${{ steps.s3-release.outputs.object }}|Download> ${{ github.event.inputs.tag }} build release",
                   "author_name": "Provider ${{ github.event.inputs.tag }}",
-                  "author_link": "https://github.com/Blank-Wallet/extension-provider",
+                  "author_link": "https://github.com/block-wallet/extension-provider",
                   "title": "Tag ${{ github.event.inputs.tag }} has been created in provider"
                 }
               ]

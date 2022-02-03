@@ -9,5 +9,10 @@ export const incompatibleSites = [
     'bridge.degate.com',
     'gnosis-safe.io',
     'matcha.xyz',
+    'oncyber.io',
     'opensea.io',
+    'polymarket.com',
+    'play.cryptopunt.com',
+    'testnets.opensea.io',
+    'zk.money',
 ];

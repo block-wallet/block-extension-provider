@@ -13,7 +13,7 @@ const shimWeb3 = (provider: BlankProvider): void => {
     let loggedMissingProperty = false;
 
     if (!(window as Window & InjectedWindow).web3) {
-        const SHIM_IDENTIFIER = '__isBlankShim__';
+        const SHIM_IDENTIFIER = 'isBlockWalletShim__';
 
         let web3Shim = { currentProvider: provider };
 
@@ -29,7 +29,7 @@ const shimWeb3 = (provider: BlankProvider): void => {
                 if (property === 'currentProvider' && !loggedCurrentProvider) {
                     loggedCurrentProvider = true;
                     log.warn(
-                        'You are accessing the Blank window.web3.currentProvider shim. This property is deprecated; use window.ethereum instead.'
+                        'You are accessing the BlockWallet window.web3.currentProvider shim. This property is deprecated; use window.ethereum instead.'
                     );
                 } else if (
                     property !== 'currentProvider' &&
@@ -43,7 +43,7 @@ const shimWeb3 = (provider: BlankProvider): void => {
             },
             set: (...args) => {
                 log.warn(
-                    'You are accessing the Blank window.web3 shim. This object is deprecated; use window.ethereum instead.'
+                    'You are accessing the BlockWallet window.web3 shim. This object is deprecated; use window.ethereum instead.'
                 );
                 return Reflect.set(...args);
             },

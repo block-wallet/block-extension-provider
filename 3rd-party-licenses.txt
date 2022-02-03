@@ -4,7 +4,7 @@ The following NPM package may be included in this product:
 
 This package contains the following license and notice below:
 
-# [Blank wallet](https://goblank.io/) ethereum provider
+# [Block wallet](https://blockwallet.io/) ethereum provider
 
 [![CI](../../workflows/Tests/badge.svg)](../../actions?query=Test)
 
@@ -32,7 +32,7 @@ The build scripts output to the default monorepo dist folder.
 yarn build
 ```
 
-For more information about how to build the complete extension refer to the following [guideline](https://github.com/Blank-Wallet/extension/blob/master/docs/guideline.md)
+For more information about how to build the complete extension refer to the following [guideline](https://github.com/block-wallet/extension/blob/master/docs/guideline.md)
 
 ### Test
 

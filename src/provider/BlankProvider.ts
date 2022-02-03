@@ -5,11 +5,12 @@ import {
     JSONRPCRequest,
     JSONRPCResponse,
     ProviderConnectInfo,
-    ProviderMessage,
     ProviderRpcError,
     ProviderEvents,
     EthereumProvider,
     ChainChangedInfo,
+    EthSubscription,
+    Web3LegacySubscription,
 } from '../types';
 import {
     ExternalEventSubscription,
@@ -36,6 +37,8 @@ interface BlankProviderState {
     isConnected: boolean;
 }
 
+const MAX_EVENT_LISTENERS = 100;
+
 /**
  * Blank Provider
  *
@@ -44,7 +47,7 @@ export default class BlankProvider
     extends SafeEventEmitter
     implements EthereumProvider
 {
-    public readonly isBlank: true;
+    public readonly isBlockWallet: true;
     public readonly isMetaMask: boolean;
     public chainId: string | null;
     public selectedAddress: string | null;
@@ -70,7 +73,7 @@ export default class BlankProvider
         this.selectedAddress = null;
         this.networkVersion = null;
 
-        this.isBlank = true;
+        this.isBlockWallet = true;
 
         this._handlers = {};
         this._requestId = 0;
@@ -95,6 +98,9 @@ export default class BlankProvider
 
         // Set provider metadata
         this._setMetadata();
+
+        // Set maximum amount of event listeners
+        this.setMaxListeners(MAX_EVENT_LISTENERS);
     }
 
     /**
@@ -199,9 +205,7 @@ export default class BlankProvider
             | any[]
             | any
     ): JSONRPCResponse | JSONRPCResponse[] | void | Promise<any> {
-        log.warn(
-            "Blank Wallet: 'ethereum.send(...)' is deprecated and may be removed in the future. Please use 'ethereum.request(...)' instead.\nFor more information, see: https://eips.ethereum.org/EIPS/eip-1193"
-        );
+        this.deprecationWarning('ethereum.send(...)', true);
 
         // send<T>(method, params): Promise<T>
         if (typeof requestOrMethod === 'string') {
@@ -257,6 +261,8 @@ export default class BlankProvider
         request: JSONRPCRequest | JSONRPCRequest[],
         callback: Callback<JSONRPCResponse> | Callback<JSONRPCResponse[]>
     ): void {
+        this.deprecationWarning('ethereum.sendAsync(...)', true);
+
         if (typeof callback !== 'function') {
             throw ethErrors.rpc.invalidRequest({
                 message: 'A callback is required',
@@ -280,9 +286,7 @@ export default class BlankProvider
     }
 
     public enable = async (): Promise<string[]> => {
-        log.warn(
-            "Blank Wallet: 'ethereum.enable(...)' is deprecated and may be removed in the future. See: https://eips.ethereum.org/EIPS/eip-1193"
-        );
+        this.deprecationWarning('ethereum.enable(...)', true);
         const accounts = (await this._postMessage(Messages.EXTERNAL.REQUEST, {
             method: JSONRPCMethod.eth_requestAccounts,
         })) as string[];
@@ -497,7 +501,7 @@ export default class BlankProvider
                 this._accountsChanged(payload);
                 break;
             case ProviderEvents.message:
-                this._sendMessageToConsumer(payload);
+                this._emitSubscriptionMessage(payload);
                 break;
             default:
                 break;
@@ -513,6 +517,11 @@ export default class BlankProvider
         error: ProviderRpcError = ethErrors.provider.disconnected()
     ) => {
         this.emit(ProviderEvents.disconnect, error);
+
+        /**
+         * @deprecated Alias of disconnect
+         */
+        this.emit(ProviderEvents.close, error);
     };
 
     private _chainChanged = ({ chainId, networkVersion }: ChainChangedInfo) => {
@@ -521,6 +530,17 @@ export default class BlankProvider
             this.networkVersion = networkVersion;
 
             this.emit(ProviderEvents.chainChanged, chainId);
+
+            /**
+             * @deprecated This was previously used with networkId instead of chainId,
+             * we keep the interface but we enforce chainId anyways
+             */
+            this.emit(ProviderEvents.networkChanged, chainId);
+
+            /**
+             * @deprecated Alias of chainChanged
+             */
+            this.emit(ProviderEvents.chainIdChanged, chainId);
         }
     };
 
@@ -539,7 +559,83 @@ export default class BlankProvider
         }
     };
 
-    private _sendMessageToConsumer = (message: ProviderMessage) => {
-        window.postMessage(message, window.location.href);
+    /**
+     * Emits to the consumers the message received via a previously
+     * initiated subscription.
+     *
+     * @param message The received subscription message
+     */
+    private _emitSubscriptionMessage = (message: EthSubscription) => {
+        this.emit(ProviderEvents.message, message);
+
+        // Emit events for legacy API
+        const web3LegacyResponse = {
+            jsonrpc: '2.0',
+            method: 'eth_subscription',
+            params: {
+                result: message.data.result,
+                subscription: message.data.subscription,
+            },
+        } as Web3LegacySubscription;
+        this.emit(ProviderEvents.data, web3LegacyResponse);
+        this.emit(
+            ProviderEvents.notification,
+            web3LegacyResponse.params.result
+        );
     };
+
+    /**
+     * Prints a console.warn message to warn the user about usage of a deprecated API
+     * @param eventName The eventName
+     */
+    public deprecationWarning(methodName: string, force = false): void {
+        const deprecatedMethods = [
+            'close',
+            'data',
+            'networkChanged',
+            'chainIdChanged',
+            'notification',
+        ];
+        if (deprecatedMethods.includes(methodName) || force) {
+            log.warn(
+                `BlockWallet: '${methodName}' is deprecated and may be removed in the future. See: https://eips.ethereum.org/EIPS/eip-1193`
+            );
+        }
+    }
+
+    /// EventEmitter overrides
+
+    public addListener(
+        eventName: string,
+        listener: (...args: any[]) => void
+    ): this {
+        this.deprecationWarning(eventName);
+        return super.addListener(eventName, listener);
+    }
+
+    public on(eventName: string, listener: (...args: any[]) => void): this {
+        this.deprecationWarning(eventName);
+        return super.on(eventName, listener);
+    }
+
+    public once(eventName: string, listener: (...args: any[]) => void): this {
+        this.deprecationWarning(eventName);
+        return super.once(eventName, listener);
+    }
+
+    public prependListener(
+        eventName: string,
+        listener: (...args: any[]) => void
+    ): this {
+        this.deprecationWarning(eventName);
+        return super.prependListener(eventName, listener);
+    }
+
+    public prependOnceListener(
+        eventName: string,
+        listener: (...args: any[]) => void
+    ): this {
+        this.deprecationWarning(eventName);
+        return super.prependOnceListener(eventName, listener);
+    }
 }
