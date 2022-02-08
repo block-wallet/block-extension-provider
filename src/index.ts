@@ -15,7 +15,7 @@ import log, { LogLevelDesc } from 'loglevel';
 | 'error'
 | 'silent'
 */
-log.setLevel((process.env.LOG_LEVEL as LogLevelDesc) || 'error');
+log.setLevel((process.env.LOG_LEVEL as LogLevelDesc) || 'warn');
 
 const blankProvider = new BlankProvider();
 

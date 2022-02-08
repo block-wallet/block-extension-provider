@@ -13,7 +13,7 @@ const shimWeb3 = (provider: BlankProvider): void => {
     let loggedMissingProperty = false;
 
     if (!(window as Window & InjectedWindow).web3) {
-        const SHIM_IDENTIFIER = '__isBlankShim__';
+        const SHIM_IDENTIFIER = 'isBlockWalletShim__';
 
         let web3Shim = { currentProvider: provider };
 

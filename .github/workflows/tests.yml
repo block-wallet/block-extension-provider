@@ -23,26 +23,26 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - run: echo "::set-output name=branch::$(git ls-remote https://${{ secrets.USER_PAT }}:${{ secrets.PAT }}@github.com/Blank-Wallet/extension.git ${{ github.head_ref }})"
+      - run: echo "::set-output name=branch::$(git ls-remote https://${{ secrets.USER_PAT }}:${{ secrets.PAT }}@github.com/Block-Wallet/extension.git ${{ github.head_ref }})"
         id: monorepo-branch
 
-      - run: echo "::set-output name=branch::$(git ls-remote https://${{ secrets.USER_PAT }}:${{ secrets.PAT }}@github.com/Blank-Wallet/extension-background.git ${{ github.head_ref }})"
+      - run: echo "::set-output name=branch::$(git ls-remote https://${{ secrets.USER_PAT }}:${{ secrets.PAT }}@github.com/Block-Wallet/extension-background.git ${{ github.head_ref }})"
         id: background-branch
 
-      - run: echo "::set-output name=branch::$(git ls-remote https://${{ secrets.USER_PAT }}:${{ secrets.PAT }}@github.com/Blank-Wallet/extension-ui.git ${{ github.head_ref }})"
+      - run: echo "::set-output name=branch::$(git ls-remote https://${{ secrets.USER_PAT }}:${{ secrets.PAT }}@github.com/Block-Wallet/extension-ui.git ${{ github.head_ref }})"
         id: ui-branch
 
       - run: echo "::set-output name=name::provider_${{ github.event.number }}_$(date +"%FT%T").zip"
         id: zip
 
-      - run: echo "::set-output name=title::$(gh pr view https://${{ secrets.USER_PAT }}:${{ secrets.PAT }}@github.com/Blank-Wallet/extension-provider/pull/${{ github.event.number }} --json title --jq '.title')"
+      - run: echo "::set-output name=title::$(gh pr view https://${{ secrets.USER_PAT }}:${{ secrets.PAT }}@github.com/Block-Wallet/extension-provider/pull/${{ github.event.number }} --json title --jq '.title')"
         id: pr
 
       - name: Checkout monorepo
         uses: actions/checkout@v2
         if: ${{ (steps.monorepo-branch.outputs.branch == '') }}
         with:
-          repository: Blank-Wallet/extension
+          repository: Block-Wallet/extension
           ref: refs/heads/master
           token: ${{ secrets.PAT }}
 
@@ -50,7 +50,7 @@ jobs:
         uses: actions/checkout@v2
         if: ${{ (steps.ui-branch.outputs.branch == '') }}
         with:
-          repository: Blank-Wallet/extension-ui
+          repository: Block-Wallet/extension-ui
           ref: refs/heads/master
           path: packages/ui/
           token: ${{ secrets.PAT }}
@@ -59,7 +59,7 @@ jobs:
         uses: actions/checkout@v2
         if: ${{ (steps.background-branch.outputs.branch == '') }}
         with:
-          repository: Blank-Wallet/extension-background
+          repository: Block-Wallet/extension-background
           ref: refs/heads/master
           path: packages/background/
           token: ${{ secrets.PAT }}
@@ -68,7 +68,7 @@ jobs:
         uses: actions/checkout@v2
         if: ${{ (steps.monorepo-branch.outputs.branch != '') }}
         with:
-          repository: Blank-Wallet/extension
+          repository: Block-Wallet/extension
           ref: ${{ github.head_ref }}
           token: ${{ secrets.PAT }}
 
@@ -76,7 +76,7 @@ jobs:
         uses: actions/checkout@v2
         if: ${{ (steps.ui-branch.outputs.branch != '') }}
         with:
-          repository: Blank-Wallet/extension-ui
+          repository: Block-Wallet/extension-ui
           ref: ${{ github.head_ref }}
           path: packages/ui/
           token: ${{ secrets.PAT }}
@@ -85,7 +85,7 @@ jobs:
         uses: actions/checkout@v2
         if: ${{ (steps.background-branch.outputs.branch != '') }}
         with:
-          repository: Blank-Wallet/extension-background
+          repository: Block-Wallet/extension-background
           ref: ${{ github.head_ref }}
           path: packages/background/
           token: ${{ secrets.PAT }}
@@ -93,7 +93,7 @@ jobs:
       - name: Checkout make scripts
         uses: actions/checkout@v2
         with:
-          repository: Blank-Wallet/blank-make
+          repository: Block-Wallet/blank-make
           ref: refs/heads/main
           path: .make
           token: ${{ secrets.PAT }}
@@ -179,9 +179,9 @@ jobs:
                   "color": "#0d118c",
                   "pretext": "<http://releases.goblank.io/provider/tmp/${{ steps.zip.outputs.name }}|Download> temp PR build",
                   "author_name": "Provider",
-                  "author_link": "https://github.com/Blank-Wallet/extension-provider",
+                  "author_link": "https://github.com/Block-Wallet/extension-provider",
                   "title": "${{ steps.pr.outputs.title }} #${{ github.event.number }}",
-                  "title_link": "https://github.com/Blank-Wallet/extension-provider/pull/${{ github.event.number }}",
+                  "title_link": "https://github.com/Block-Wallet/extension-provider/pull/${{ github.event.number }}",
                   "fields": [
                     {
                         "title": "Branch",
@@ -190,7 +190,7 @@ jobs:
                     },
                     {
                         "title": "Commit",
-                        "value": "<https://github.com/Blank-Wallet/extension-provider/commit/${{github.event.pull_request.head.sha}}|${{github.event.pull_request.head.sha}}>",
+                        "value": "<https://github.com/Block-Wallet/extension-provider/commit/${{github.event.pull_request.head.sha}}|${{github.event.pull_request.head.sha}}>",
                         "short": true
                     }
                   ]

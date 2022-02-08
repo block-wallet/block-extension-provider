@@ -69,7 +69,7 @@ jobs:
                   "color": "#00F6FA",
                   "pretext": "<http://releases.goblank.io/${{ steps.s3-release.outputs.object }}|Download> ${{ github.event.inputs.tag }} build release",
                   "author_name": "Provider ${{ github.event.inputs.tag }}",
-                  "author_link": "https://github.com/Blank-Wallet/extension-provider",
+                  "author_link": "https://github.com/Block-Wallet/extension-provider",
                   "title": "Tag ${{ github.event.inputs.tag }} has been created in provider"
                 }
               ]
