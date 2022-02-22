@@ -27,7 +27,7 @@ import {
 } from '@blank/background/utils/types/communication';
 import SafeEventEmitter from '@metamask/safe-event-emitter';
 import { ethErrors } from 'eth-rpc-errors';
-import { getSiteMetadata, isCompatible } from '../utils/site';
+import { getIconData, isCompatible } from '../utils/site';
 import { JSONRPCMethod } from '@blank/background/utils/types/ethereum';
 import { validateError } from '../utils/errors';
 import log from 'loglevel';
@@ -96,11 +96,11 @@ export default class BlankProvider
         // Subscribe to state updates
         this._eventSubscription(this._eventHandler);
 
-        // Set provider metadata
-        this._setMetadata();
-
         // Set maximum amount of event listeners
         this.setMaxListeners(MAX_EVENT_LISTENERS);
+
+        // Set site icon
+        this._setIcon();
     }
 
     /**
@@ -118,6 +118,10 @@ export default class BlankProvider
      * @returns Request response
      */
     public request = async (args: RequestArguments): Promise<unknown> => {
+        if (!this._state.isConnected) {
+            throw ethErrors.provider.disconnected();
+        }
+
         if (!args || typeof args !== 'object' || Array.isArray(args)) {
             throw ethErrors.rpc.invalidRequest({
                 message: 'Expected a single, non-array, object argument.',
@@ -307,46 +311,14 @@ export default class BlankProvider
             Messages.EXTERNAL.SETUP_PROVIDER
         );
 
-        this.networkVersion = networkVersion;
-        this.chainId = chainId;
+        if (chainId !== undefined && networkVersion !== undefined) {
+            this.networkVersion = networkVersion;
+            this.chainId = chainId;
 
-        this._connect({ chainId });
-        this._accountsChanged(accounts);
-    };
-
-    /**
-     * Sends site metadata to the background
-     *
-     */
-    private _setMetadata = async () => {
-        if (
-            document.readyState === 'complete' ||
-            document.readyState === 'interactive'
-        ) {
-            const siteMetadata = await getSiteMetadata();
-
-            this._postMessage(Messages.EXTERNAL.SET_METADATA, {
-                siteMetadata,
-            });
-        } else {
-            const domContentLoadedHandler = async () => {
-                const siteMetadata = await getSiteMetadata();
-
-                this._postMessage(Messages.EXTERNAL.SET_METADATA, {
-                    siteMetadata,
-                });
-
-                window.removeEventListener(
-                    'DOMContentLoaded',
-                    domContentLoadedHandler
-                );
-            };
-
-            window.addEventListener(
-                'DOMContentLoaded',
-                domContentLoadedHandler
-            );
+            this._connect({ chainId });
         }
+
+        this._accountsChanged(accounts);
     };
 
     /**
@@ -362,6 +334,19 @@ export default class BlankProvider
             undefined,
             cb
         );
+    };
+
+    /**
+     * Set favicon url
+     */
+    private _setIcon = async () => {
+        const iconURL = await getIconData();
+
+        if (iconURL) {
+            this._postMessage(Messages.EXTERNAL.SET_ICON, {
+                iconURL,
+            });
+        }
     };
 
     /* ----------------------------------------------------------------------------- */
@@ -516,6 +501,7 @@ export default class BlankProvider
     private _disconnect = (
         error: ProviderRpcError = ethErrors.provider.disconnected()
     ) => {
+        this._state.isConnected = false;
         this.emit(ProviderEvents.disconnect, error);
 
         /**

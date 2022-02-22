@@ -107,8 +107,8 @@ export type Callback<T> = (err: Error | null, result: T | null) => void;
 
 export interface ProviderSetupData {
     accounts: string[];
-    chainId: string;
-    networkVersion: string;
+    chainId?: string;
+    networkVersion?: string;
 }
 
 /**

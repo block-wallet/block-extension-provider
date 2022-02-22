@@ -1,73 +1,15 @@
-import { SiteMetadata } from '../types';
 import { incompatibleSites } from './constants/incompatibleSites';
 
 /**
- * Extracts the site name from the DOM
- *
+ * Check if the site is on the list of incompatibleSites
  */
-const getName = (): string => {
-    const { document } = window;
-
-    const siteName: HTMLMetaElement | null = document.querySelector(
-        'head > meta[property="og:site_name"]'
-    );
-
-    if (siteName) {
-        return siteName.content;
-    }
-
-    const metaTitle: HTMLMetaElement | null = document.querySelector(
-        'head > meta[name="title"]'
-    );
-
-    if (metaTitle) {
-        return metaTitle.content;
-    }
-
-    if (document.title && document.title.length > 0) {
-        return document.title;
-    }
-
-    return window.location.hostname;
-};
-
-/**
- * Extracts an icon for the site from the DOM
- *
- * @returns the icon URL
- */
-const getIconFromDom = async (): Promise<string | null> => {
-    const { document } = window;
-
-    const icons: NodeListOf<HTMLLinkElement> = document.querySelectorAll(
-        'head > link[rel~="icon"]'
-    );
-
-    for (const icon of icons) {
-        if (icon && (await imgExists(icon.href))) {
-            return icon.href;
+export const isCompatible = (): boolean => {
+    for (let i = 0; i < incompatibleSites.length; i++) {
+        if (incompatibleSites[i] === window.location.hostname) {
+            return false;
         }
     }
-
-    return null;
-};
-
-/**
- * Returns whether the given image URL exists
- *
- * @param url - the image url
- */
-const imgExists = (url: string): Promise<boolean> => {
-    return new Promise((resolve, reject) => {
-        try {
-            const img = document.createElement('img');
-            img.onload = () => resolve(true);
-            img.onerror = () => resolve(false);
-            img.src = url;
-        } catch (error) {
-            reject(error);
-        }
-    });
+    return true;
 };
 
 /**
@@ -119,24 +61,73 @@ export const checkScriptLoad = (): boolean => {
 };
 
 /**
- * Returns site metadata
- *
+ * Returns site favicon data
  */
-export const getSiteMetadata = async (): Promise<SiteMetadata> => {
-    const iconURL = await getIconFromDom();
+export const getIconData = async (): Promise<string | null> => {
+    return new Promise((resolve) => {
+        if (
+            document.readyState === 'complete' ||
+            document.readyState === 'interactive'
+        ) {
+            resolve(getIconFromDom());
+        } else {
+            const domContentLoadedHandler = async () => {
+                resolve(getIconFromDom());
 
-    return {
-        iconURL,
-        name: getName(),
-    };
+                window.removeEventListener(
+                    'DOMContentLoaded',
+                    domContentLoadedHandler
+                );
+            };
+
+            window.addEventListener(
+                'DOMContentLoaded',
+                domContentLoadedHandler
+            );
+        }
+    });
 };
 
-// Check if the site is on the list of incompatibleSites
-export const isCompatible = (): boolean => {
-    for (let i = 0; i < incompatibleSites.length; i++) {
-        if (incompatibleSites[i] === window.location.hostname) {
-            return false;
+/**
+ * Extracts an icon for the site from the DOM
+ *
+ * @returns Icon url or null if there isn't a valid one
+ */
+const getIconFromDom = async (): Promise<string | null> => {
+    const { document } = window;
+
+    const icons: NodeListOf<HTMLLinkElement> = document.querySelectorAll(
+        'head > link[rel~="icon"]'
+    );
+
+    for (const icon of icons) {
+        if (icon && (await isValidImage(icon.href))) {
+            return icon.href;
         }
     }
-    return true;
+
+    return null;
+};
+
+/**
+ * Checks if the given image loads correctly
+ *
+ * @param url Image source
+ */
+const isValidImage = async (url: string): Promise<boolean> => {
+    const img = document.createElement('img');
+
+    const isValid = await new Promise<boolean>((resolve) => {
+        try {
+            img.onload = () => resolve(true);
+            img.onerror = () => resolve(false);
+            img.src = url;
+        } catch (error) {
+            resolve(false);
+        }
+    });
+
+    img.remove();
+
+    return isValid;
 };

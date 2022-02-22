@@ -13,6 +13,7 @@ export const incompatibleSites = [
     'opensea.io',
     'polymarket.com',
     'play.cryptopunt.com',
+    'staking.syntropynet.com',
     'testnets.opensea.io',
     'zk.money',
 ];
