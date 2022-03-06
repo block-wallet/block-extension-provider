@@ -47,11 +47,12 @@ export default class BlankProvider
     extends SafeEventEmitter
     implements EthereumProvider
 {
-    public readonly isBlockWallet: true;
+    public readonly isBlockWallet: boolean;
     public readonly isMetaMask: boolean;
     public chainId: string | null;
     public selectedAddress: string | null;
     public networkVersion: string | null;
+    public autoRefreshOnNetworkChange: boolean;
     private _state: BlankProviderState;
     private _handlers: Handlers;
     private _requestId: number;
@@ -73,13 +74,14 @@ export default class BlankProvider
         this.selectedAddress = null;
         this.networkVersion = null;
 
-        this.isBlockWallet = true;
+        this.isBlockWallet = isCompatible();
 
         this._handlers = {};
         this._requestId = 0;
 
         // Metamask compatibility
-        this.isMetaMask = !isCompatible();
+        this.isMetaMask = !this.isBlockWallet;
+        this.autoRefreshOnNetworkChange = false;
         this._metamask = {
             isEnabled: () => true,
             isApproved: async () => true,
@@ -511,6 +513,8 @@ export default class BlankProvider
     };
 
     private _chainChanged = ({ chainId, networkVersion }: ChainChangedInfo) => {
+        this._connect({ chainId });
+
         if (chainId !== this.chainId) {
             this.chainId = chainId;
             this.networkVersion = networkVersion;

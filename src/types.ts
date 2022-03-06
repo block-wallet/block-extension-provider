@@ -12,10 +12,11 @@ export interface InjectedWindow extends This {
 
 // Provider interface
 export interface EthereumProvider {
-    readonly isBlockWallet: true;
+    readonly isBlockWallet: boolean;
 
     // Metamask compatibility
     readonly isMetaMask: boolean;
+    autoRefreshOnNetworkChange: boolean;
 
     /**
      * ethereum.chainId

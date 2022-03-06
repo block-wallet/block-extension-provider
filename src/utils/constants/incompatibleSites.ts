@@ -1,19 +1,24 @@
 /**
  * List of sites that are not compatible with blank wallet.
  *
- * Be sure to add the location.hostname
+ * Make sure to add the domain name
  */
 export const incompatibleSites = [
-    'app.hop.exchange',
-    'app.mcdex.io',
-    'bridge.degate.com',
+    'cryptopunt.com',
+    'crystl.finance',
+    'degate.com',
+    'etherscan.io',
     'gnosis-safe.io',
+    'hop.exchange',
+    'looksrare.org',
     'matcha.xyz',
+    'mcdex.io',
     'oncyber.io',
     'opensea.io',
+    'pegaxy.io',
     'polymarket.com',
-    'play.cryptopunt.com',
-    'staking.syntropynet.com',
-    'testnets.opensea.io',
+    'spiritswap.finance',
+    'syntropynet.com',
+    'yearn.finance',
     'zk.money',
 ];

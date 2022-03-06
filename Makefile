@@ -1,8 +1,9 @@
 TS_NODE_PROJECT			:= tsconfig.json
 BRANCH					:= $(shell git symbolic-ref --short -q HEAD | sed 's/[\.\/]/-/g')
+ENVIRONMENT				?= dev
 
 build/provider:
-	@if [ "$(BRANCH)" != "master" ]; then \
+	@if [ "$(ENVIRONMENT)" == "dev" ]; then \
 		npx webpack --config ./webpack/webpack.dev.js; \
 	else \
 		npx webpack --config ./webpack/webpack.config.js; \

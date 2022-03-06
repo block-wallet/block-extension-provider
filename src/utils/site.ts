@@ -5,7 +5,7 @@ import { incompatibleSites } from './constants/incompatibleSites';
  */
 export const isCompatible = (): boolean => {
     for (let i = 0; i < incompatibleSites.length; i++) {
-        if (incompatibleSites[i] === window.location.hostname) {
+        if (window.location.hostname.includes(incompatibleSites[i])) {
             return false;
         }
     }
