@@ -1,4 +1,5 @@
 import {
+    CONTENT,
     EXTERNAL,
     Origin,
     WindowTransportRequestMessage,
@@ -6,7 +7,23 @@ import {
 import log from 'loglevel';
 import { checkScriptLoad } from './utils/site';
 
-// Connect to the extension
+// Check background settings for script load
+chrome.runtime.sendMessage(
+    { message: CONTENT.SHOULD_INJECT },
+    (response: { shouldInject: boolean }): void => {
+        const error = chrome.runtime.lastError;
+
+        if (response.shouldInject !== true || shouldLoad !== true || error) {
+            port.disconnect();
+            window.removeEventListener('message', windowListenter);
+            log.warn('BlockWallet: Provider not injected due to user setting.');
+        } else {
+            loadScript();
+        }
+    }
+);
+
+// Setup port connection
 const port = chrome.runtime.connect({ name: Origin.PROVIDER });
 
 // Send any messages from the extension back to the page
@@ -17,25 +34,29 @@ port.onMessage.addListener((message): void => {
     );
 });
 
-// All messages from the page, pass them to the extension
-window.addEventListener(
-    'message',
-    ({ data, source }: MessageEvent<WindowTransportRequestMessage>): void => {
-        // Only allow messages from our window, by the inject
-        if (
-            source !== window ||
-            data.origin !== Origin.PROVIDER ||
-            !Object.values(EXTERNAL).includes(data.message)
-        ) {
-            return;
-        }
-
-        port.postMessage(data);
+// Setup window listener
+const windowListenter = ({
+    data,
+    source,
+}: MessageEvent<WindowTransportRequestMessage>): void => {
+    // Only allow messages from our window, by the inject
+    if (
+        source !== window ||
+        data.origin !== Origin.PROVIDER ||
+        !Object.values(EXTERNAL).includes(data.message)
+    ) {
+        return;
     }
-);
 
-// Load script
-if (checkScriptLoad()) {
+    port.postMessage(data);
+};
+
+window.addEventListener('message', windowListenter);
+
+// Script load
+const shouldLoad = checkScriptLoad();
+
+const loadScript = (): void => {
     try {
         const container = document.head || document.documentElement;
         const script = document.createElement('script');
@@ -53,4 +74,4 @@ if (checkScriptLoad()) {
     } catch (error) {
         log.error('BlockWallet: Provider injection failed.', error);
     }
-}
+};
